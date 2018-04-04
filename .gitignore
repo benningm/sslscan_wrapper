@@ -1,0 +1,6 @@
+.bundle
+vendor
+*.gem
+Gemfile.lock
+html
+pkg
