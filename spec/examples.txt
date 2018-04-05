@@ -1,8 +1,0 @@
-example_id                    | status | run_time        |
------------------------------ | ------ | --------------- |
-./spec/report_spec.rb[1:1:1]  | passed | 0.00326 seconds |
-./spec/scanner_spec.rb[1:1:1] | passed | 0.00259 seconds |
-./spec/scanner_spec.rb[1:1:2] | passed | 0.00199 seconds |
-./spec/scanner_spec.rb[1:1:3] | passed | 0.00017 seconds |
-./spec/scanner_spec.rb[1:1:4] | passed | 0.00113 seconds |
-./spec/scanner_spec.rb[1:1:5] | passed | 0.01152 seconds |

@@ -4,3 +4,4 @@ vendor
 Gemfile.lock
 html
 pkg
+spec/examples.txt

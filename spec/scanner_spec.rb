@@ -5,7 +5,7 @@ RSpec.describe SslscanWrapper::Scanner do
   describe '#with default options' do
     it 'run a default sslscan' do
       scan = SslscanWrapper::Scanner.new
-      expect(scan.cmd('testhost', 123)).to match_array([ 'sslscan', '--xml=-', '--no-colour', 'testhost:123'])
+      expect(scan.send(:cmd, 'testhost', 123)).to match_array([ 'sslscan', '--xml=-', '--no-colour', 'testhost:123'])
     end
 
     it '#with flags' do
@@ -14,7 +14,7 @@ RSpec.describe SslscanWrapper::Scanner do
           s.send("#{flag}=", true)
         end
         expect(scan.send(flag)).to eq(true)
-        expect(scan.cmd('testhost', 123)).to include("--#{flag}".gsub('_', '-'))
+        expect(scan.send(:cmd, 'testhost', 123)).to include("--#{flag}".gsub('_', '-'))
       end
     end
 
@@ -23,7 +23,7 @@ RSpec.describe SslscanWrapper::Scanner do
         s.sni_name = 'snihost'
       end
       expect(scan.sni_name).to eq('snihost')
-      expect(scan.cmd('testhost', 123)).to include('--sni-name', 'snihost')
+      expect(scan.send(:cmd, 'testhost', 123)).to include('--sni-name', 'snihost')
     end
 
     it '#executes the sslscan' do

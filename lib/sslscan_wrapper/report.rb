@@ -1,4 +1,5 @@
 require 'nokogiri'
+require 'openssl'
 require 'time'
 
 module SslscanWrapper
@@ -20,59 +21,72 @@ module SslscanWrapper
       @doc = Nokogiri::XML(@body)
     end
 
-    # The hostname of the scanned host
-    def host
-      @doc.xpath('//ssltest/@host').first.value
+    def self.attr_first_value_accessor(name, xpath)
+      define_method(name) do
+        node = @doc.xpath(xpath).first
+        node.value unless node.nil?
+      end
     end
+
+    def self.attr_first_value_boolean_true?(name, xpath)
+      define_method(name) do
+        node = @doc.xpath(xpath).first
+        node.value.to_i == 1 unless node.nil?
+      end
+    end
+
+    def self.content_first_node_accessor(name, xpath)
+      define_method(name) do
+        node = @doc.xpath(xpath).first
+        node.content unless node.nil?
+      end
+    end
+
+    def self.content_first_node_boolean_true?(name, xpath)
+      define_method(name) do
+        node = @doc.xpath(xpath).first
+        node.content == 'true' unless node.nil?
+      end
+    end
+
+    def self.all_attr_values_accessor(name, xpath)
+      define_method(name) do
+        @doc.xpath(xpath).map(&:value)
+      end
+    end
+
+    # The hostname of the scanned host
+    attr_first_value_accessor :host, '//ssltest/@host'
 
     # The port of the scan report
-    def port
-      @doc.xpath('//ssltest/@port').first.value
-    end
+    attr_first_value_accessor :port, '//ssltest/@port'
 
     # Is ssl compression supported on target?
-    def compression_supported?
-      @doc.xpath('//compression/@supported').first.value == '1'
-    end
+    attr_first_value_boolean_true? :compression_supported?, '//compression/@supported'
 
     # Does the target support TLS renegotiation?
-    def renegotiation_supported?
-      @doc.xpath('//renegotiation/@supported').first.value == '1'
-    end
+    attr_first_value_boolean_true? :renegotiation_supported?, '//renegotiation/@supported'
 
-    def renegotiation_secure?
-      @doc.xpath('//renegotiation/@secure').first.value == '1'
-    end
+    # Is the renegotiation secure?
+    attr_first_value_boolean_true? :renegotiation_secure?, '//renegotiation/@secure'
 
     # Signature algorithm used in the certificate
-    def signature_algorithm
-      @doc.xpath('//certificate/signature-algorithm').first.content
-    end
+    content_first_node_accessor :signature_algorithm, '//certificate/signature-algorithm'
 
     # Subject of the certificate
-    def subject
-      @doc.xpath('//certificate/subject').first.content
-    end
+    content_first_node_accessor :subject, '//certificate/subject'
 
     # Subject alternative names of the certificate
-    def altnames
-      @doc.xpath('//certificate/altnames').first.content
-    end
+    content_first_node_accessor :altnames, '//certificate/altnames'
 
     # Issuer of the certificate
-    def issuer
-      @doc.xpath('//certificate/issuer').first.content
-    end
+    content_first_node_accessor :issuer, '//certificate/issuer'
 
     # Is the certificate a self-signed certificate?
-    def self_signed?
-      @doc.xpath('//certificate/self-signed').first.content == 'true'
-    end
+    content_first_node_boolean_true? :self_signed?, '//certificate/self-signed'
 
     # Is the certificate expired?
-    def expired?
-      @doc.xpath('//certificate/expired').first.content == 'true'
-    end
+    content_first_node_boolean_true? :expired?, '//certificate/expired'
 
     # Time the certificate starts to be valid
     def not_before
@@ -87,28 +101,38 @@ module SslscanWrapper
     end
 
     # Returns a list of supported ciphers
-    def ciphers
-      @doc.xpath('//cipher/@cipher').map(&:value)
-    end
+    all_attr_values_accessor :ciphers, '//cipher/@cipher'
 
     # Is the cipher supported?
-    def cipher_supported?(cipher)
-      @doc.xpath("//cipher[@cipher=\"#{cipher}\"]").count > 0
+    def support_cipher?(cipher)
+      @doc.xpath("//cipher[@cipher=$cipher]", nil, { cipher: cipher }).count > 0
     end
 
     # Returns a list of preferred ciphers
-    def preferred_ciphers
-      @doc.xpath('//cipher[@status="preferred"]/@cipher').map(&:value)
-    end
+    all_attr_values_accessor :preferred_ciphers, '//cipher[@status="preferred"]/@cipher'
 
     # Returns a list of SSL/TLS protocol versions vulnerable to heartbleed
-    def heartbleed_vulnerable_sslversions
-      @doc.xpath('//heartbleed[@vulnerable="1"]/@sslversion').map(&:value)
-    end
+    all_attr_values_accessor :heartbleed_vulnerable_sslversions, '//heartbleed[@vulnerable="1"]/@sslversion'
 
     # Are there any heartblead vulnerable SSL/TLS protocol versions?
     def heartbleed_vulnerable?
       @doc.xpath('//heartbleed[@vulnerable="1"]').count > 0
+    end
+
+    # Returns a list of supported SSL protocol versions
+    def sslversions
+      @doc.xpath('//cipher/@sslversion').map(&:value).uniq
+    end
+
+    # Check if a SSL protocol version is supported
+    def support_sslversion?(version)
+      @doc.xpath("//cipher[@sslversion=$version]", nil, { version: version }).count > 0
+    end
+
+    # Return the parsed certificate blob as OpenSSL::X509::Certificate
+    def certificate
+      node = @doc.xpath('//certificate/certificate-blob').first
+      OpenSSL::X509::Certificate.new(node.content) unless node.nil?
     end
   end
 end
