@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s| 
   s.name = 'sslscan_wrapper'
-  s.version = '0.0.2'
+  s.version = '0.0.3'
   s.author = 'Markus Benning'
   s.email = 'ich@markusbenning.de'
   s.homepage = 'https://github.com/benningm/sslscan_wrapper'
