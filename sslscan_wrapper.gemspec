@@ -9,8 +9,8 @@ spec = Gem::Specification.new do |s|
   s.license = 'MIT'
   s.files = Dir.glob('lib/**/*.rb') + Dir.glob('bin/*') + Dir.glob('[A-Z]*') + Dir.glob('test/**/*')
   s.require_paths << 'lib'
+  s.add_dependency('nokogiri', '~> 1')
   s.add_development_dependency('aruba', '~> 0')
-  s.add_development_dependency('nokogiri', '~> 1')
   s.add_development_dependency('rake', '~> 12')
   s.add_development_dependency('rdoc', '~> 6')
 end
